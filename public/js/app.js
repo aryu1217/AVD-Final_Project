@@ -269,13 +269,9 @@ function initMap() {
     },
   ];
   map = new google.maps.Map(document.getElementById("map"), {
-    zoom: 10,
+    zoom: 8,
     center: { lat: 37.5665, lng: 126.978 }, // 서울을 중심으로 설정
     styles: mapStyle,
-    mapTypeControl: false, // 지도/위성 버튼 숨기기
-    streetViewControl: false, // 거리 뷰(사람 모양) 버튼 숨기기
-    fullscreenControl: false, // 전체 화면 버튼 숨기기
-    zoomControl: false,
   });
 
   geocoder = new google.maps.Geocoder(); // Geocoder 객체 생성

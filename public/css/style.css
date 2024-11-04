@@ -1,0 +1,47 @@
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.header {
+  display: flex;
+  justify-content: center; /* 수평 중앙 정렬 */
+  align-items: center; /* 수직 중앙 정렬 */
+  height: 100px; /* 헤더 높이 설정 */
+  font-size: 24px; /* 원하는 폰트 크기로 설정 */
+}
+
+#main-container {
+  display: flex;
+  justify-content: space-around;
+  height: 100%;
+  width: 100%;
+  margin-top: 20px;
+}
+
+#map {
+  height: 80%;
+  width: 40%;
+  border: 2px solid black;
+  border-radius: 10px;
+  margin-left: -100px;
+}
+
+#bottom-container {
+}
+
+input[type="text"],
+button {
+  margin: 10px;
+  padding: 0.5em;
+}
+
+#response {
+  background-color: #fff;
+  padding: 10px;
+  border: 1px solid #ddd;
+  max-width: 600px;
+  white-space: pre-wrap;
+}
