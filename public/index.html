@@ -7,12 +7,17 @@
     <link rel="stylesheet" href="css/style.css" />
   </head>
   <body>
-    <h1>여행 경로 최적화</h1>
-    <div id="map"></div>
-    <input id="location-input" type="text" placeholder="Enter a location" />
-    <button onclick="geocodeLocation()">Geocode</button>
-    <pre id="response"></pre>
-
-    <script src="js/app.js"></script>
+    <div class="header">
+      <h1>여행 설계자</h1>
+    </div>
+    <div id="main-container">
+      <div id="map"></div>
+      <div id="right-container">
+        <input id="location-input" type="text" placeholder="Enter a location" />
+        <button onclick="geocodeLocation()">Geocode</button>
+        <pre id="response"></pre>
+      </div>
+      <script src="js/app.js"></script>
+    </div>
   </body>
 </html>
