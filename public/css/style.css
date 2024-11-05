@@ -15,10 +15,14 @@ body {
 
 #main-container {
   display: flex;
-  justify-content: space-around;
+  justify-content: center;
   height: 100%;
   width: 100%;
   margin-top: 20px;
+  padding-right: 50px;
+}
+
+#right-container {
 }
 
 #map {
@@ -26,13 +30,13 @@ body {
   width: 40%;
   border: 2px solid black;
   border-radius: 10px;
-  margin-left: -100px;
+  margin-left: -300px;
 }
 
 #bottom-container {
 }
 
-input[type="text"],
+input[type='text'],
 button {
   margin: 10px;
   padding: 0.5em;
