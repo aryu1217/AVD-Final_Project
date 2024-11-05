@@ -309,6 +309,8 @@ window.geocodeLocation = function () {
       const location = new Location(name, latitude, longitude);
       locationRepository.add(location);
 
+      addLocationCard(location);
+
       // 콘솔에 모든 저장된 Location 객체 출력
       console.log('저장된 Location 객체들:', locationRepository.getAll());
 
@@ -316,15 +318,34 @@ window.geocodeLocation = function () {
       map.setCenter(locationData.geometry.location);
       map.setZoom(14);
       marker.setPosition(locationData.geometry.location);
-
-      // 결과를 텍스트로 출력
-      document.getElementById('response').innerText = JSON.stringify(
-        { name, latitude, longitude },
-        null,
-        2
-      );
     } else {
       alert('Geocode was not successful for the following reason: ' + status);
     }
   });
+};
+
+function addLocationCard(location) {
+  const locationList = document.getElementById('location-list');
+
+  // 카드 생성
+  const card = document.createElement('div');
+  card.classList.add('location-card');
+  card.innerHTML = `
+    <h3>${location.name}</h3>
+    <p>위도: ${location.latitude}</p>
+    <p>경도: ${location.longitude}</p>
+    <button onclick="removeLocationCard('${location.name}', this)">삭제</button>
+  `;
+
+  // 카드 추가
+  locationList.appendChild(card);
+}
+
+// 위치 카드 삭제 함수
+window.removeLocationCard = function (name, button) {
+  const card = button.parentElement;
+  card.remove();
+
+  locationRepository.delLocation(name); // 리포지토리에서 객체 삭제
+  console.log('삭제된 후의 Location 객체들:', locationRepository.getAll()); // 확인용
 };

@@ -12,6 +12,12 @@ class LocationRepository {
   getAll() {
     return this.locations;
   }
+
+  delLocation(name) {
+    this.locations = this.locations.filter((location) => location.name !== name);
+  }
+
+  delAll() {}
 }
 
 // LocationRepository 인스턴스를 내보내기 (Singleton 패턴 사용)
