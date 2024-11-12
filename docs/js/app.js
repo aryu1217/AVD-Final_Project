@@ -1,9 +1,6 @@
 import locationRepository from "./repository/LocationRepository.js";
 import Location from "./model/LocationModel.js";
 // app.js
-const apiKey = "YOUR_GOOGLE_MAPS_API_KEY"; // 직접 API 키를 입력합니다.
-// 이 키를 사용해 지도 관련 기능을 호출
-
 // API 키를 서버에서 받아오기
 fetch("/api-key")
   .then((response) => response.json())
