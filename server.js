@@ -1,10 +1,10 @@
-require("dotenv").config(); // .env 파일 로드
+require("dotenv").config();
 const express = require("express");
 const path = require("path");
 
 const app = express();
 
-// 정적 파일 제공 경로 설정 (public 폴더 내 파일들)
+// 정적 파일 제공 경로 설정 (public 폴더 안에 있는 파일들)
 app.use(express.static(path.join(__dirname, "public")));
 
 // 루트 경로에서 index.html 파일 제공
@@ -22,3 +22,5 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`서버가 http://localhost:${PORT}에서 실행 중입니다.`);
 });
+
+module.exports = app;
