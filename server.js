@@ -1,15 +1,15 @@
-require("dotenv").config();
+require("dotenv").config(); // .env 파일 로드
 const express = require("express");
 const path = require("path");
 
 const app = express();
 
-// 정적 파일 제공 경로 설정 (public 폴더)
+// 정적 파일 제공 경로 설정 (public 폴더 내 파일들)
 app.use(express.static(path.join(__dirname, "public")));
 
 // 루트 경로에서 index.html 파일 제공
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "index.html"));
+  res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
 // API 키 전달 라우트 설정
@@ -18,7 +18,7 @@ app.get("/api-key", (req, res) => {
 });
 
 // 서버 포트 설정 및 시작
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`서버가 http://localhost:${PORT}에서 실행 중입니다.`);
 });
