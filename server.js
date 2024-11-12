@@ -4,12 +4,12 @@ const path = require("path");
 
 const app = express();
 
-// 정적 파일 제공 경로 설정 (public 폴더 안에 있는 파일들)
-app.use(express.static(path.join(__dirname, "public")));
+// 정적 파일 제공 경로 설정 (docs 폴더 안에 있는 파일들)
+app.use(express.static(path.join(__dirname, "docs")));
 
 // 루트 경로에서 index.html 파일 제공
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "index.html"));
+  res.sendFile(path.join(__dirname, "docs", "index.html"));
 });
 
 // API 키 전달 라우트 설정
