@@ -14,6 +14,7 @@ fetch("/api-key")
 let map;
 let marker;
 let geocoder;
+let autocomplete;
 
 // Google Maps API 로드 함수
 function loadGoogleMaps(apiKey) {
@@ -276,17 +277,51 @@ window.initMap = function () {
     },
   ];
   map = new google.maps.Map(document.getElementById("map"), {
-    zoom: 8,
+    zoom: 10,
     center: { lat: 37.5665, lng: 126.978 }, // 서울을 중심으로 설정
     styles: mapStyle,
     disableDefaultUI: true,
   });
 
-  geocoder = new google.maps.Geocoder(); // Geocoder 객체 생성
+  geocoder = new google.maps.Geocoder();
 
   // 기본 마커 설정
   marker = new google.maps.Marker({
-    map,
+    map: map,
+  });
+
+  // 자동완성 기능 추가
+  const input = document.getElementById("location-input");
+  autocomplete = new google.maps.places.Autocomplete(input, {
+    fields: ["geometry", "name", "formatted_address"],
+  });
+
+  // 자동완성 선택 시 위치로 이동
+  autocomplete.addListener("place_changed", () => {
+    const place = autocomplete.getPlace();
+    if (!place.geometry || !place.geometry.location) {
+      console.log("해당 위치를 찾을 수 없습니다.");
+      return;
+    }
+
+    // 지도와 마커를 새 위치로 설정
+    map.setCenter(place.geometry.location);
+    map.setZoom(14);
+    marker.setPosition(place.geometry.location);
+
+    // 위치 정보 출력
+    const locationName = place.formatted_address;
+    const latitude = place.geometry.location.lat();
+    const longitude = place.geometry.location.lng();
+
+    // Location 객체 생성 및 저장
+    const location = new Location(locationName, latitude, longitude);
+    locationRepository.add(location);
+
+    // 웹에 카드 추가
+    addLocationCard(location);
+
+    console.log("저장된 Location 객체들:", locationRepository.getAll());
   });
 };
 
@@ -354,7 +389,6 @@ import Graph from "./model/Graph.js";
 
 const locationGraph = new Graph(); // 그래프 인스턴스 생성
 
-// 그래프 생성 버튼 클릭 시 호출되는 함수
 // 모든 노드를 서로 연결하여 완전 그래프 생성
 window.generateCompleteGraph = function () {
   const locations = locationRepository.getAll();
