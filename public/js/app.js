@@ -389,32 +389,35 @@ import Graph from "./model/Graph.js";
 
 const locationGraph = new Graph(); // 그래프 인스턴스 생성
 
-// 모든 노드를 서로 연결하여 완전 그래프 생성
-window.generateCompleteGraph = function () {
+// 모든 노드를 서로 연결하지 않고, 가까운 노드만 연결
+window.generateSparseGraph = function () {
   const locations = locationRepository.getAll();
 
-  // 노드가 2개 이상일 때만 완전 그래프 생성
   if (locations.length < 2) {
-    console.log("노드가 2개 이상 있어야 완전 그래프를 생성할 수 있습니다.");
+    console.log("노드가 2개 이상 있어야 그래프를 생성할 수 있습니다.");
     return;
   }
 
-  // 모든 Location 객체들을 노드로 추가
   locations.forEach((location) => {
     locationGraph.addNode(location.name);
   });
 
-  // 모든 노드 쌍에 대해 간선 추가
-  for (let i = 0; i < locations.length; i++) {
-    for (let j = i + 1; j < locations.length; j++) {
-      const loc1 = locations[i];
-      const loc2 = locations[j];
-      const distance = locationGraph.calculateDistance(loc1, loc2); // 거리 계산
+  // 각 노드에서 가장 가까운 3개 노드만 연결
+  locations.forEach((loc1) => {
+    const nearest = locations
+      .filter((loc2) => loc1.name !== loc2.name)
+      .map((loc2) => ({
+        name: loc2.name,
+        distance: locationGraph.calculateDistance(loc1, loc2),
+      }))
+      .sort((a, b) => a.distance - b.distance)
+      .slice(0, 3); // 가장 가까운 3개 선택
 
-      locationGraph.addEdge(loc1.name, loc2.name, distance);
-    }
-  }
+    nearest.forEach((neighbor) => {
+      locationGraph.addEdge(loc1.name, neighbor.name, neighbor.distance);
+    });
+  });
 
-  // 그래프 상태 확인
+  console.log("희소 그래프 생성 완료:");
   locationGraph.printGraph();
 };

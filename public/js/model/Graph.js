@@ -12,12 +12,15 @@ export default class Graph {
 
   // 간선 추가 (양방향)
   addEdge(node1, node2, weight) {
-    if (!this.adjacencyList[node1]) {
-      this.addNode(node1);
+    // 중복된 간선이 있는지 확인
+    if (
+      this.adjacencyList[node1]?.some((edge) => edge.node === node2) ||
+      this.adjacencyList[node2]?.some((edge) => edge.node === node1)
+    ) {
+      return; // 이미 간선이 존재하면 추가하지 않음
     }
-    if (!this.adjacencyList[node2]) {
-      this.addNode(node2);
-    }
+
+    // 간선 추가
     this.adjacencyList[node1].push({ node: node2, weight });
     this.adjacencyList[node2].push({ node: node1, weight });
   }
