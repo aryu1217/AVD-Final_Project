@@ -15,6 +15,9 @@ let map;
 let marker;
 let geocoder;
 let autocomplete;
+let startNode = null;
+let endNode = null;
+let waypoints = [];
 
 // Google Maps API 로드 함수
 function loadGoogleMaps(apiKey) {
@@ -366,10 +369,15 @@ function addLocationCard(location) {
   const card = document.createElement("div");
   card.classList.add("location-card");
   card.innerHTML = `
-    <h3>${location.name}</h3>
+   <h3>${location.name}</h3>
     <p>위도: ${location.latitude}</p>
     <p>경도: ${location.longitude}</p>
-    <button onclick="removeLocationCard('${location.name}', this)">삭제</button>
+    <div class="button-container">
+      <button onclick="setAsStart('${location.name}')">출발지</button>
+      <button onclick="setAsEnd('${location.name}')">도착지</button>
+      <button onclick="addWaypoint('${location.name}')">경유지</button>
+      <button onclick="removeLocationCard('${location.name}', this)">삭제</button>
+    </div>
   `;
 
   // 카드 추가
@@ -377,12 +385,35 @@ function addLocationCard(location) {
 }
 
 // 위치 카드 삭제 함수
-window.removeLocationCard = function (name, button) {
-  const card = button.parentElement;
-  card.remove();
+window.removeLocationCard = function (locationName, button) {
+  // 버튼의 부모 요소 중 카드 전체를 선택
+  const card = button.closest(".location-card");
 
-  locationRepository.delLocation(name); // 리포지토리에서 객체 삭제
-  console.log("삭제된 후의 Location 객체들:", locationRepository.getAll()); // 확인용
+  // 카드 삭제
+  if (card) {
+    card.remove();
+    console.log(`"${locationName}" 카드가 삭제되었습니다.`);
+  }
+
+  // LocationRepository에서 해당 지역 제거
+  locationRepository.delLocation(locationName);
+
+  // 출발지 또는 도착지가 삭제된 경우 초기화
+  if (locationName === startNode) {
+    startNode = null; // NULL 대신 null 사용
+    console.log("출발지가 초기화되었습니다.");
+  }
+  if (locationName === endNode) {
+    endNode = null;
+    console.log("도착지가 초기화되었습니다.");
+  }
+
+  // 경유지 배열에서 삭제된 위치 제거
+  waypoints = waypoints.filter((name) => name !== locationName);
+  console.log("삭제 후 남은 경유지:", waypoints);
+
+  // 남은 Location 객체 출력
+  console.log("삭제 후 남은 Location 객체들:", locationRepository.getAll());
 };
 
 import Graph from "./model/Graph.js";
@@ -420,4 +451,47 @@ window.generateSparseGraph = function () {
 
   console.log("희소 그래프 생성 완료:");
   locationGraph.printGraph();
+};
+
+// 출발지 설정
+window.setAsStart = function (locationName) {
+  startNode = locationName;
+  console.log(`현재 출발지: ${startNode}`);
+};
+
+// 도착지 설정
+window.setAsEnd = function (locationName) {
+  endNode = locationName;
+  console.log(`현재 도착지: ${endNode}`);
+};
+
+// 경유지 추가
+window.addWaypoint = function (locationName) {
+  if (!waypoints.includes(locationName)) {
+    waypoints.push(locationName);
+    console.log(`현재 경유지: ${waypoints}`);
+  } else {
+    console.log("경유지 이미 존재함.");
+  }
+};
+
+// 최적 경로 찾기
+window.findOptimalPath = function () {
+  if (!startNode || !endNode) {
+    alert("출발지와 도착지를 설정하세요.");
+    return;
+  }
+
+  const optimalPath = locationGraph.findOptimalPath(
+    startNode,
+    endNode,
+    waypoints
+  );
+
+  if (optimalPath.length === 0) {
+    alert("경로를 찾을 수 없습니다.");
+  } else {
+    alert(`최적 경로: ${optimalPath.join(" → ")}`);
+    console.log("최적 경로:", optimalPath);
+  }
 };

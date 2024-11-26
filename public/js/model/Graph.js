@@ -53,4 +53,70 @@ export default class Graph {
       );
     }
   }
+
+  findShortestPath(startNode, endNode) {
+    const distances = {};
+    const previous = {};
+    const priorityQueue = [];
+
+    for (let node in this.adjacencyList) {
+      distances[node] = Infinity;
+      previous[node] = null;
+    }
+
+    distances[startNode] = 0;
+    priorityQueue.push({ node: startNode, priority: 0 });
+
+    while (priorityQueue.length > 0) {
+      priorityQueue.sort((a, b) => a.priority - b.priority);
+      const current = priorityQueue.shift().node;
+
+      if (current === endNode) break;
+
+      for (let neighbor of this.adjacencyList[current]) {
+        const alt = distances[current] + neighbor.weight;
+
+        if (alt < distances[neighbor.node]) {
+          distances[neighbor.node] = alt;
+          previous[neighbor.node] = current;
+          priorityQueue.push({ node: neighbor.node, priority: alt });
+        }
+      }
+    }
+
+    const path = [];
+    let currentNode = endNode;
+
+    while (currentNode) {
+      path.unshift(currentNode);
+      currentNode = previous[currentNode];
+    }
+
+    return path.length > 1 ? path : [];
+  }
+
+  findOptimalPath(startNode, endNode, mandatoryNodes = []) {
+    const fullPath = [];
+    let currentNode = startNode;
+
+    const allNodes = [...mandatoryNodes, endNode];
+    for (let i = 0; i < allNodes.length; i++) {
+      const nextNode = allNodes[i];
+      const partialPath = this.findShortestPath(currentNode, nextNode);
+
+      if (partialPath.length === 0) {
+        console.warn(
+          `"${currentNode}"에서 "${nextNode}"까지 경로를 찾을 수 없습니다.`
+        );
+        return [];
+      }
+
+      if (fullPath.length > 0) fullPath.pop();
+      fullPath.push(...partialPath);
+
+      currentNode = nextNode;
+    }
+
+    return fullPath;
+  }
 }
