@@ -18,6 +18,9 @@ let autocomplete;
 let startNode = null;
 let endNode = null;
 const preferences = {}; // 지역별 선호도를 저장
+let polyline; // 지도에 표시할 Polyline 객체
+let directionsService; // Directions API 서비스
+let directionsRenderer; // 경로 시각화 렌더러
 
 // Google Maps API 로드 함수
 function loadGoogleMaps(apiKey) {
@@ -25,6 +28,18 @@ function loadGoogleMaps(apiKey) {
   script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&callback=initMap&libraries=places,geometry`;
   script.async = true;
   document.head.appendChild(script);
+}
+function extractLocationName(place) {
+  // 장소 이름이 있으면 우선적으로 사용
+  if (place.name) {
+    return place.name;
+  }
+  // 전체 주소에서 간단한 부분 추출
+  if (place.formatted_address) {
+    return place.formatted_address.split(",")[0];
+  }
+  // 기본 이름 반환
+  return "알 수 없는 위치";
 }
 
 // 지도 초기화 함수
@@ -316,6 +331,10 @@ window.initMap = function () {
     const location = new Location(locationName, latitude, longitude);
     locationRepository.add(location);
 
+    directionsService = new google.maps.DirectionsService();
+    directionsRenderer = new google.maps.DirectionsRenderer();
+    directionsRenderer.setMap(map);
+
     // 카드 추가
     addLocationCard(location);
 
@@ -536,4 +555,43 @@ window.findAllPaths = function () {
   } else {
     alert(`모든 경로 개수: ${allPaths.length}`);
   }
+};
+
+// 경로 시각화 함수
+window.visualizePath = function () {
+  if (!startNode || !endNode) {
+    alert("출발지와 도착지를 설정하세요.");
+    return;
+  }
+
+  // 선택한 이동 모드 가져오기
+  const travelMode = document.querySelector(
+    'input[name="travelMode"]:checked'
+  ).value;
+
+  const request = {
+    origin: startNode, // 출발지
+    destination: endNode, // 도착지
+    travelMode: google.maps.TravelMode[travelMode], // TRANSIT 또는 WALKING
+  };
+
+  console.log("출발지:", startNode);
+  console.log("도착지:", endNode);
+  console.log("선택된 이동 모드:", travelMode);
+
+  // Directions API 요청
+  directionsService.route(request, (result, status) => {
+    if (status === "OK") {
+      directionsRenderer.setDirections(result); // 지도에 경로 표시
+      console.log("경로 데이터:", result);
+    } else if (status === "ZERO_RESULTS") {
+      alert(
+        "현재 설정된 이동 모드로 경로를 찾을 수 없습니다. 다른 이동 모드를 선택하세요."
+      );
+      console.error("ZERO_RESULTS: 경로가 존재하지 않습니다.");
+    } else {
+      alert("경로를 가져오는 중 오류가 발생했습니다.");
+      console.error("Directions API 오류 상태:", status);
+    }
+  });
 };

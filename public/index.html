@@ -19,6 +19,13 @@
         <button onclick="findOptimalPath()">다익스트라 실행</button>
         <button onclick="findAllPaths()">모든 경로 탐색 (DFS)</button>
         <div id="controls">
+          <label>
+            <input type="radio" name="travelMode" value="TRANSIT" checked />
+            차도
+          </label>
+          <label>
+            <input type="radio" name="travelMode" value="WALKING" /> 인도
+          </label>
           <button onclick="visualizePath()">경로 시각화</button>
         </div>
 
