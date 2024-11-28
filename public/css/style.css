@@ -65,8 +65,12 @@ button {
   padding: 16px;
   margin-bottom: 10px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  max-width: 250px;
-  height: 100px;
+  max-width: 250px; /* 카드 너비 제한 */
+  word-wrap: break-word; /* 긴 텍스트를 줄바꿈 처리 */
+  overflow: hidden; /* 내용이 튀어나가지 않도록 숨김 */
+}
+.location-card input[type="range"] {
+  width: 100%;
 }
 
 .location-card h3 {
@@ -97,18 +101,19 @@ button {
 }
 
 .button-container {
-  display: flex; /* Flexbox로 버튼들을 일렬로 배치 */
-  gap: 1px; /* 버튼 간격 */
-  margin-top: 10px; /* 버튼 그룹 위쪽 여백 */
+  display: flex;
+  justify-content: space-between; /* 버튼 간격 조절 */
+  flex-wrap: wrap; /* 버튼이 넘칠 경우 다음 줄로 내려감 */
+  margin-top: 10px;
 }
 
 .button-container button {
-  padding: 3px 3px;
-  font-size: 12.5px;
+  flex: 1; /* 버튼을 균등한 크기로 설정 */
+  margin: 2px; /* 버튼 간격 */
+  max-width: 100px; /* 버튼 너비 제한 */
+  font-size: 12px; /* 버튼 텍스트 크기 조정 */
+  text-align: center; /* 텍스트 정렬 */
   border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  width: 50px;
 }
 
 /* 버튼 색상 */
@@ -123,11 +128,6 @@ button {
 }
 
 .button-container button:nth-child(3) {
-  background-color: #ff9800; /* 경유지 추가: 주황색 */
-  color: white;
-}
-
-.button-container button:nth-child(4) {
   background-color: #f44336; /* 삭제: 빨간색 */
   color: white;
 }

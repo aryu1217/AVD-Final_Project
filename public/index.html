@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>여행 경로 최적화</title>
+    <title>여행 설계자</title>
     <link rel="stylesheet" href="/css/style.css" />
   </head>
   <body>
@@ -15,10 +15,9 @@
       <div id="right-container">
         <input id="location-input" type="text" placeholder="Enter a location" />
         <button onclick="geocodeLocation()">추가하기</button>
-        <button onclick="generateSparseGraph()">그래프 생성</button>
-        <button onclick="findOptimalPath()">다익스트라 생성</button>
-
-        <!-- 그래프 생성 버튼 -->
+        <!-- <button onclick="generateSparseGraph()">그래프 생성</button> -->
+        <button onclick="findOptimalPath()">다익스트라 실행</button>
+        <button onclick="findAllPaths()">모든 경로 탐색 (DFS)</button>
         <div id="location-list"></div>
       </div>
     </div>

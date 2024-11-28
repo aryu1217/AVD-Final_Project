@@ -54,6 +54,14 @@ export default class Graph {
     }
   }
 
+  // 가중치를 조정하는 메서드
+  calculateAdjustedWeight(distance, preferenceA, preferenceB) {
+    const weightFactor = 100; // 선호도 중요도 조정 계수
+    const averagePreference = (preferenceA + preferenceB) / 2;
+    return distance * (weightFactor / averagePreference);
+  }
+
+  // 다익스트라 알고리즘
   findShortestPath(startNode, endNode) {
     const distances = {};
     const previous = {};
@@ -76,6 +84,8 @@ export default class Graph {
       for (let neighbor of this.adjacencyList[current]) {
         const alt = distances[current] + neighbor.weight;
 
+        console.log(`경로: ${current} → ${neighbor.node}, 현재 가중치: ${alt}`);
+
         if (alt < distances[neighbor.node]) {
           distances[neighbor.node] = alt;
           previous[neighbor.node] = current;
@@ -86,37 +96,38 @@ export default class Graph {
 
     const path = [];
     let currentNode = endNode;
-
     while (currentNode) {
       path.unshift(currentNode);
       currentNode = previous[currentNode];
     }
 
+    console.log(`최적 경로: ${path.join(" → ")}`);
     return path.length > 1 ? path : [];
   }
 
-  findOptimalPath(startNode, endNode, mandatoryNodes = []) {
-    const fullPath = [];
-    let currentNode = startNode;
+  // 모든 가능한 경로 탐색 (DFS)
+  findAllPathsDFS(
+    startNode,
+    endNode,
+    visited = new Set(),
+    path = [],
+    allPaths = []
+  ) {
+    visited.add(startNode);
+    path.push(startNode);
 
-    const allNodes = [...mandatoryNodes, endNode];
-    for (let i = 0; i < allNodes.length; i++) {
-      const nextNode = allNodes[i];
-      const partialPath = this.findShortestPath(currentNode, nextNode);
-
-      if (partialPath.length === 0) {
-        console.warn(
-          `"${currentNode}"에서 "${nextNode}"까지 경로를 찾을 수 없습니다.`
-        );
-        return [];
+    if (startNode === endNode) {
+      allPaths.push([...path]);
+    } else {
+      for (const neighbor of this.adjacencyList[startNode]) {
+        if (!visited.has(neighbor.node)) {
+          this.findAllPathsDFS(neighbor.node, endNode, visited, path, allPaths);
+        }
       }
-
-      if (fullPath.length > 0) fullPath.pop();
-      fullPath.push(...partialPath);
-
-      currentNode = nextNode;
     }
 
-    return fullPath;
+    visited.delete(startNode);
+    path.pop();
+    return allPaths;
   }
 }

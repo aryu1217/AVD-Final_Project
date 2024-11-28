@@ -17,7 +17,6 @@ let geocoder;
 let autocomplete;
 let startNode = null;
 let endNode = null;
-let waypoints = [];
 
 // Google Maps API 로드 함수
 function loadGoogleMaps(apiKey) {
@@ -369,20 +368,42 @@ function addLocationCard(location) {
   const card = document.createElement("div");
   card.classList.add("location-card");
   card.innerHTML = `
-   <h3>${location.name}</h3>
+    <h3>${location.name}</h3>
     <p>위도: ${location.latitude}</p>
     <p>경도: ${location.longitude}</p>
+    
+    <!-- 선호도 슬라이더 추가 -->
+    <label for="${location.name}-preference">선호도:</label>
+    <input id="${location.name}-preference" type="range" min="1" max="10" value="5" 
+      oninput="updatePreference('${location.name}', this.value)" />
+    <span id="${location.name}-preference-value">5</span>
+    
+    <!-- 기존 버튼들 -->
     <div class="button-container">
-      <button onclick="setAsStart('${location.name}')">출발지</button>
-      <button onclick="setAsEnd('${location.name}')">도착지</button>
-      <button onclick="addWaypoint('${location.name}')">경유지</button>
+      <button onclick="setAsStart('${location.name}')">출발지로 설정</button>
+      <button onclick="setAsEnd('${location.name}')">도착지로 설정</button>
       <button onclick="removeLocationCard('${location.name}', this)">삭제</button>
     </div>
   `;
 
   // 카드 추가
   locationList.appendChild(card);
+
+  // 기본 선호도를 저장
+  preferences[location.name] = 5; // 기본값 5
 }
+
+const preferences = {}; // 지역별 선호도를 저장
+
+// 선호도 업데이트 함수
+window.updatePreference = function (locationName, value) {
+  preferences[locationName] = parseInt(value);
+  const valueDisplay = document.getElementById(
+    `${locationName}-preference-value`
+  );
+  valueDisplay.innerText = value;
+  console.log(`${locationName} 지역 선호도 업데이트: ${value}`);
+};
 
 // 위치 카드 삭제 함수
 window.removeLocationCard = function (locationName, button) {
@@ -408,19 +429,14 @@ window.removeLocationCard = function (locationName, button) {
     console.log("도착지가 초기화되었습니다.");
   }
 
-  // 경유지 배열에서 삭제된 위치 제거
-  waypoints = waypoints.filter((name) => name !== locationName);
-  console.log("삭제 후 남은 경유지:", waypoints);
-
   // 남은 Location 객체 출력
   console.log("삭제 후 남은 Location 객체들:", locationRepository.getAll());
 };
 
 import Graph from "./model/Graph.js";
 
-const locationGraph = new Graph(); // 그래프 인스턴스 생성
+const locationGraph = new Graph();
 
-// 모든 노드를 서로 연결하지 않고, 가까운 노드만 연결
 window.generateSparseGraph = function () {
   const locations = locationRepository.getAll();
 
@@ -433,7 +449,6 @@ window.generateSparseGraph = function () {
     locationGraph.addNode(location.name);
   });
 
-  // 각 노드에서 가장 가까운 3개 노드만 연결
   locations.forEach((loc1) => {
     const nearest = locations
       .filter((loc2) => loc1.name !== loc2.name)
@@ -442,10 +457,17 @@ window.generateSparseGraph = function () {
         distance: locationGraph.calculateDistance(loc1, loc2),
       }))
       .sort((a, b) => a.distance - b.distance)
-      .slice(0, 3); // 가장 가까운 3개 선택
+      .slice(0, 3);
 
     nearest.forEach((neighbor) => {
-      locationGraph.addEdge(loc1.name, neighbor.name, neighbor.distance);
+      const preferenceA = preferences[loc1.name] || 5;
+      const preferenceB = preferences[neighbor.name] || 5;
+      const adjustedWeight = locationGraph.calculateAdjustedWeight(
+        neighbor.distance,
+        preferenceA,
+        preferenceB
+      );
+      locationGraph.addEdge(loc1.name, neighbor.name, adjustedWeight);
     });
   });
 
@@ -453,6 +475,42 @@ window.generateSparseGraph = function () {
   locationGraph.printGraph();
 };
 
+window.updatePreference = function (locationName, value) {
+  preferences[locationName] = parseInt(value);
+  document.getElementById(`${locationName}-preference-value`).innerText = value;
+  console.log(`${locationName} 지역 선호도: ${value}`);
+};
+
+window.findOptimalPath = function () {
+  if (!startNode || !endNode) {
+    alert("출발지와 도착지를 설정하세요.");
+    return;
+  }
+
+  const optimalPath = locationGraph.findShortestPath(startNode, endNode);
+  if (optimalPath.length === 0) {
+    alert("경로를 찾을 수 없습니다.");
+  } else {
+    alert(`최적 경로: ${optimalPath.join(" → ")}`);
+    console.log("최적 경로:", optimalPath);
+  }
+};
+
+window.findAllPaths = function () {
+  if (!startNode || !endNode) {
+    alert("출발지와 도착지를 설정하세요.");
+    return;
+  }
+
+  const allPaths = locationGraph.findAllPathsDFS(startNode, endNode);
+  console.log("모든 가능한 경로:", allPaths);
+
+  if (allPaths.length === 0) {
+    alert("경로를 찾을 수 없습니다.");
+  } else {
+    alert(`모든 경로 개수: ${allPaths.length}`);
+  }
+};
 // 출발지 설정
 window.setAsStart = function (locationName) {
   startNode = locationName;
@@ -465,16 +523,6 @@ window.setAsEnd = function (locationName) {
   console.log(`현재 도착지: ${endNode}`);
 };
 
-// 경유지 추가
-window.addWaypoint = function (locationName) {
-  if (!waypoints.includes(locationName)) {
-    waypoints.push(locationName);
-    console.log(`현재 경유지: ${waypoints}`);
-  } else {
-    console.log("경유지 이미 존재함.");
-  }
-};
-
 // 최적 경로 찾기
 window.findOptimalPath = function () {
   if (!startNode || !endNode) {
@@ -482,11 +530,8 @@ window.findOptimalPath = function () {
     return;
   }
 
-  const optimalPath = locationGraph.findOptimalPath(
-    startNode,
-    endNode,
-    waypoints
-  );
+  // 출발지와 도착지 간 최단 경로 계산
+  const optimalPath = locationGraph.findShortestPath(startNode, endNode);
 
   if (optimalPath.length === 0) {
     alert("경로를 찾을 수 없습니다.");
