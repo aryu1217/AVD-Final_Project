@@ -17,6 +17,7 @@ let geocoder;
 let autocomplete;
 let startNode = null;
 let endNode = null;
+const preferences = {}; // 지역별 선호도를 저장
 
 // Google Maps API 로드 함수
 function loadGoogleMaps(apiKey) {
@@ -298,7 +299,7 @@ window.initMap = function () {
     fields: ["geometry", "name", "formatted_address"],
   });
 
-  // 자동완성 선택 시 위치로 이동
+  // 자동완성 선택 처리
   autocomplete.addListener("place_changed", () => {
     const place = autocomplete.getPlace();
     if (!place.geometry || !place.geometry.location) {
@@ -306,13 +307,8 @@ window.initMap = function () {
       return;
     }
 
-    // 지도와 마커를 새 위치로 설정
-    map.setCenter(place.geometry.location);
-    map.setZoom(14);
-    marker.setPosition(place.geometry.location);
-
-    // 위치 정보 출력
-    const locationName = place.formatted_address;
+    // 지역 이름 추출
+    const locationName = place.name || place.formatted_address.split(",")[0];
     const latitude = place.geometry.location.lat();
     const longitude = place.geometry.location.lng();
 
@@ -320,10 +316,15 @@ window.initMap = function () {
     const location = new Location(locationName, latitude, longitude);
     locationRepository.add(location);
 
-    // 웹에 카드 추가
+    // 카드 추가
     addLocationCard(location);
 
     console.log("저장된 Location 객체들:", locationRepository.getAll());
+
+    // 지도 중심 설정 및 마커 표시
+    map.setCenter(place.geometry.location);
+    map.setZoom(14);
+    marker.setPosition(place.geometry.location);
   });
 };
 
@@ -338,7 +339,9 @@ window.geocodeLocation = function () {
   geocoder.geocode({ address: address }, (results, status) => {
     if (status === "OK") {
       const locationData = results[0];
-      const name = locationData.formatted_address;
+
+      // 지역 이름 추출
+      const name = extractLocationName(locationData);
       const latitude = locationData.geometry.location.lat();
       const longitude = locationData.geometry.location.lng();
 
@@ -346,9 +349,9 @@ window.geocodeLocation = function () {
       const location = new Location(name, latitude, longitude);
       locationRepository.add(location);
 
+      // 카드 추가
       addLocationCard(location);
 
-      // 콘솔에 모든 저장된 Location 객체 출력
       console.log("저장된 Location 객체들:", locationRepository.getAll());
 
       // 지도 중심 설정 및 마커 표시
@@ -393,8 +396,6 @@ function addLocationCard(location) {
   preferences[location.name] = 5; // 기본값 5
 }
 
-const preferences = {}; // 지역별 선호도를 저장
-
 // 선호도 업데이트 함수
 window.updatePreference = function (locationName, value) {
   preferences[locationName] = parseInt(value);
@@ -437,13 +438,28 @@ import Graph from "./model/Graph.js";
 
 const locationGraph = new Graph();
 
-window.generateSparseGraph = function () {
+// 출발지 설정
+window.setAsStart = function (locationName) {
+  startNode = locationName;
+  console.log(`현재 출발지: ${startNode}`);
+};
+
+// 도착지 설정
+window.setAsEnd = function (locationName) {
+  endNode = locationName;
+  console.log(`현재 도착지: ${endNode}`);
+};
+
+// 그래프 자동 생성 (거리 기반 + 선호도 반영)
+function autoGenerateGraph() {
   const locations = locationRepository.getAll();
 
   if (locations.length < 2) {
     console.log("노드가 2개 이상 있어야 그래프를 생성할 수 있습니다.");
     return;
   }
+
+  locationGraph.clear(); // 기존 그래프 초기화
 
   locations.forEach((location) => {
     locationGraph.addNode(location.name);
@@ -471,23 +487,30 @@ window.generateSparseGraph = function () {
     });
   });
 
-  console.log("희소 그래프 생성 완료:");
+  console.log("그래프 생성 완료 (선호도 반영):");
   locationGraph.printGraph();
-};
-
+}
+// 선호도 변경 시 자동 반영
 window.updatePreference = function (locationName, value) {
   preferences[locationName] = parseInt(value);
   document.getElementById(`${locationName}-preference-value`).innerText = value;
   console.log(`${locationName} 지역 선호도: ${value}`);
+
+  // 선호도 변경 후 그래프 재생성
+  autoGenerateGraph();
 };
 
+// 다익스트라 실행
 window.findOptimalPath = function () {
+  autoGenerateGraph(); // 그래프 생성
+
   if (!startNode || !endNode) {
     alert("출발지와 도착지를 설정하세요.");
     return;
   }
 
   const optimalPath = locationGraph.findShortestPath(startNode, endNode);
+
   if (optimalPath.length === 0) {
     alert("경로를 찾을 수 없습니다.");
   } else {
@@ -496,7 +519,10 @@ window.findOptimalPath = function () {
   }
 };
 
+// 모든 경로 탐색 (DFS)
 window.findAllPaths = function () {
+  autoGenerateGraph(); // 그래프 생성
+
   if (!startNode || !endNode) {
     alert("출발지와 도착지를 설정하세요.");
     return;
@@ -509,34 +535,5 @@ window.findAllPaths = function () {
     alert("경로를 찾을 수 없습니다.");
   } else {
     alert(`모든 경로 개수: ${allPaths.length}`);
-  }
-};
-// 출발지 설정
-window.setAsStart = function (locationName) {
-  startNode = locationName;
-  console.log(`현재 출발지: ${startNode}`);
-};
-
-// 도착지 설정
-window.setAsEnd = function (locationName) {
-  endNode = locationName;
-  console.log(`현재 도착지: ${endNode}`);
-};
-
-// 최적 경로 찾기
-window.findOptimalPath = function () {
-  if (!startNode || !endNode) {
-    alert("출발지와 도착지를 설정하세요.");
-    return;
-  }
-
-  // 출발지와 도착지 간 최단 경로 계산
-  const optimalPath = locationGraph.findShortestPath(startNode, endNode);
-
-  if (optimalPath.length === 0) {
-    alert("경로를 찾을 수 없습니다.");
-  } else {
-    alert(`최적 경로: ${optimalPath.join(" → ")}`);
-    console.log("최적 경로:", optimalPath);
   }
 };

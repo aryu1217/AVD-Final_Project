@@ -3,6 +3,11 @@ export default class Graph {
     this.adjacencyList = {}; // 그래프의 인접 리스트 표현
   }
 
+  // 그래프 초기화
+  clear() {
+    this.adjacencyList = {}; // 인접 리스트 초기화
+  }
+
   // 노드 추가
   addNode(node) {
     if (!this.adjacencyList[node]) {
@@ -56,7 +61,7 @@ export default class Graph {
 
   // 가중치를 조정하는 메서드
   calculateAdjustedWeight(distance, preferenceA, preferenceB) {
-    const weightFactor = 100; // 선호도 중요도 조정 계수
+    const weightFactor = 300; // 선호도 중요도 조정 계수
     const averagePreference = (preferenceA + preferenceB) / 2;
     return distance * (weightFactor / averagePreference);
   }
