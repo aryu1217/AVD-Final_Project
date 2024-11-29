@@ -389,6 +389,8 @@ window.geocodeLocation = function () {
   });
 };
 
+const markers = {};
+
 function addLocationCard(location) {
   const locationList = document.getElementById("location-list");
 
@@ -419,6 +421,18 @@ function addLocationCard(location) {
 
   // 기본 선호도를 저장
   preferences[location.name] = 5; // 기본값 5
+
+  // 지도에 마커 추가
+  const marker = new google.maps.Marker({
+    position: { lat: location.latitude, lng: location.longitude },
+    map: map,
+    title: location.name, // 마커에 지역 이름 표시
+  });
+
+  // 마커 저장
+  markers[location.name] = marker;
+
+  console.log(`마커 추가: ${location.name}`, marker);
 }
 
 // 선호도 업데이트 함수
@@ -445,9 +459,18 @@ window.removeLocationCard = function (locationName, button) {
   // LocationRepository에서 해당 지역 제거
   locationRepository.delLocation(locationName);
 
+  // 지도에서 마커 제거
+  if (markers[locationName]) {
+    markers[locationName].setMap(null); // 지도에서 마커 제거
+    delete markers[locationName]; // 마커 객체에서 삭제
+    console.log(`"${locationName}" 마커가 삭제되었습니다.`);
+  } else {
+    console.error(`마커를 찾을 수 없습니다: ${locationName}`);
+  }
+
   // 출발지 또는 도착지가 삭제된 경우 초기화
   if (locationName === startNode) {
-    startNode = null; // NULL 대신 null 사용
+    startNode = null;
     console.log("출발지가 초기화되었습니다.");
   }
   if (locationName === endNode) {
@@ -594,7 +617,9 @@ window.visualizePath = function () {
     const endLocation = locationRepository.get(path[index + 1]);
 
     if (!startLocation || !endLocation) {
-      console.error(`노드 정보를 찾을 수 없습니다: ${startNode}, ${endNode}`);
+      console.error(
+        `노드 정보를 찾을 수 없습니다: ${path[index]}, ${path[index + 1]}`
+      );
       return;
     }
 
@@ -604,9 +629,15 @@ window.visualizePath = function () {
       travelMode: google.maps.TravelMode[travelMode], // 선택한 이동 모드 적용
     };
 
+    // 경로 시각화를 위한 DirectionsRenderer 생성
+    const renderer = new google.maps.DirectionsRenderer({
+      map: map, // 현재 지도 객체
+      suppressMarkers: true, // 기본 마커 비활성화 (마커를 커스터마이징하려면)
+    });
+
     directionsService.route(request, (result, status) => {
       if (status === "OK") {
-        directionsRenderer.setDirections(result); // 지도에 경로 표시
+        renderer.setDirections(result); // 지도에 경로 표시
         console.log("경로 데이터:", result);
       } else if (status === "ZERO_RESULTS") {
         alert(
