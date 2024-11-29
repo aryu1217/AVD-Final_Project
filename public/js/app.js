@@ -564,34 +564,72 @@ window.visualizePath = function () {
     return;
   }
 
-  // 선택한 이동 모드 가져오기
-  const travelMode = document.querySelector(
-    'input[name="travelMode"]:checked'
-  ).value;
+  // 다익스트라 알고리즘으로 경로 계산
+  const path = locationGraph.findShortestPath(startNode, endNode);
+  if (!path || path.length < 2) {
+    alert("경로를 찾을 수 없습니다.");
+    return;
+  }
 
-  const request = {
-    origin: startNode, // 출발지
-    destination: endNode, // 도착지
-    travelMode: google.maps.TravelMode[travelMode], // TRANSIT 또는 WALKING
-  };
+  console.log("최적 경로:", path);
 
-  console.log("출발지:", startNode);
-  console.log("도착지:", endNode);
-  console.log("선택된 이동 모드:", travelMode);
-
-  // Directions API 요청
-  directionsService.route(request, (result, status) => {
-    if (status === "OK") {
-      directionsRenderer.setDirections(result); // 지도에 경로 표시
-      console.log("경로 데이터:", result);
-    } else if (status === "ZERO_RESULTS") {
-      alert(
-        "현재 설정된 이동 모드로 경로를 찾을 수 없습니다. 다른 이동 모드를 선택하세요."
-      );
-      console.error("ZERO_RESULTS: 경로가 존재하지 않습니다.");
-    } else {
-      alert("경로를 가져오는 중 오류가 발생했습니다.");
-      console.error("Directions API 오류 상태:", status);
+  // 경로 상의 각 노드에 마커 추가
+  path.forEach((nodeName) => {
+    const location = locationRepository.get(nodeName);
+    if (!location) {
+      console.error(`Node ${nodeName}에 대한 좌표 정보가 없습니다.`);
+      return;
     }
+
+    const marker = new google.maps.Marker({
+      position: { lat: location.latitude, lng: location.longitude },
+      map: map,
+      title: nodeName,
+    });
+
+    console.log(`노드 ${nodeName}에 마커 추가:`, location);
   });
+
+  // Directions API를 사용해 실제 경로 시각화
+  const combinedRoute = []; // 전체 경로를 저장할 배열
+
+  function processSegment(startNode, endNode, index) {
+    const startLocation = locationRepository.get(startNode);
+    const endLocation = locationRepository.get(endNode);
+
+    if (!startLocation || !endLocation) {
+      console.error(`노드 정보를 찾을 수 없습니다: ${startNode}, ${endNode}`);
+      return;
+    }
+
+    const request = {
+      origin: { lat: startLocation.latitude, lng: startLocation.longitude },
+      destination: { lat: endLocation.latitude, lng: endLocation.longitude },
+      travelMode: google.maps.TravelMode.DRIVING, // TRANSIT, WALKING 등 변경 가능
+    };
+
+    directionsService.route(request, (result, status) => {
+      if (status === "OK") {
+        combinedRoute.push(...result.routes[0].overview_path); // 경로를 결합
+        if (index === path.length - 2) {
+          // 마지막 호출일 때 전체 경로를 지도에 표시
+          const polyline = new google.maps.Polyline({
+            path: combinedRoute,
+            geodesic: true,
+            strokeColor: "#FF0000",
+            strokeOpacity: 0.8,
+            strokeWeight: 4,
+          });
+          polyline.setMap(map);
+          console.log("경로 시각화 완료:", combinedRoute);
+        }
+      } else {
+        console.error("Directions API 요청 실패:", status);
+      }
+    });
+  }
+
+  for (let i = 0; i < path.length - 1; i++) {
+    processSegment(path[i], path[i + 1], i);
+  }
 };

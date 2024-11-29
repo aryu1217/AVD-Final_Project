@@ -72,6 +72,7 @@ export default class Graph {
     const previous = {};
     const priorityQueue = [];
 
+    // 초기화
     for (let node in this.adjacencyList) {
       distances[node] = Infinity;
       previous[node] = null;
@@ -80,16 +81,18 @@ export default class Graph {
     distances[startNode] = 0;
     priorityQueue.push({ node: startNode, priority: 0 });
 
+    // 다익스트라 알고리즘 시작
     while (priorityQueue.length > 0) {
+      // 우선순위 큐에서 가장 작은 우선순위를 가진 노드 추출
       priorityQueue.sort((a, b) => a.priority - b.priority);
-      const current = priorityQueue.shift().node;
+      const currentElement = priorityQueue.shift(); // currentElement에서 `node` 추출
+      const current = currentElement.node; // 여기서 current 정의
 
       if (current === endNode) break;
 
+      // 현재 노드의 이웃 탐색
       for (let neighbor of this.adjacencyList[current]) {
         const alt = distances[current] + neighbor.weight;
-
-        console.log(`경로: ${current} → ${neighbor.node}, 현재 가중치: ${alt}`);
 
         if (alt < distances[neighbor.node]) {
           distances[neighbor.node] = alt;
@@ -99,6 +102,7 @@ export default class Graph {
       }
     }
 
+    // 최단 경로 추적
     const path = [];
     let currentNode = endNode;
     while (currentNode) {
@@ -106,7 +110,6 @@ export default class Graph {
       currentNode = previous[currentNode];
     }
 
-    console.log(`최적 경로: ${path.join(" → ")}`);
     return path.length > 1 ? path : [];
   }
 
