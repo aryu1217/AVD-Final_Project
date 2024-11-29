@@ -586,6 +586,18 @@ window.findAllPaths = function () {
   }
 };
 
+// DirectionsRenderer 객체들을 저장할 배열
+const directionsRenderers = [];
+
+// 경로 초기화 함수
+window.clearRoutes = function () {
+  directionsRenderers.forEach((renderer) => {
+    renderer.setMap(null); // 지도에서 경로 삭제
+  });
+  directionsRenderers.length = 0; // 배열 초기화
+  console.log("모든 경로가 초기화되었습니다.");
+};
+
 // 경로 시각화 함수
 window.visualizePath = function () {
   if (!startNode || !endNode) {
@@ -638,6 +650,7 @@ window.visualizePath = function () {
     directionsService.route(request, (result, status) => {
       if (status === "OK") {
         renderer.setDirections(result); // 지도에 경로 표시
+        directionsRenderers.push(renderer); // DirectionsRenderer 저장
         console.log("경로 데이터:", result);
       } else if (status === "ZERO_RESULTS") {
         alert(
@@ -651,3 +664,6 @@ window.visualizePath = function () {
     });
   });
 };
+document
+  .getElementById("clear-route-btn")
+  .addEventListener("click", clearRoutes);
