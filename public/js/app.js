@@ -570,6 +570,13 @@ window.visualizePath = function () {
     return;
   }
 
+  // HTML에서 선택된 이동 모드 가져오기
+  const travelMode = document.querySelector(
+    'input[name="travelMode"]:checked'
+  ).value;
+
+  console.log("선택된 이동 모드:", travelMode);
+
   // 다익스트라 알고리즘으로 경로 계산
   const path = locationGraph.findShortestPath(startNode, endNode);
   if (!path || path.length < 2) {
@@ -577,18 +584,14 @@ window.visualizePath = function () {
     return;
   }
 
-  console.log("최적 경로:", path); // 경로 확인
+  console.log("최적 경로:", path);
 
   // Directions API를 사용해 실제 경로 시각화
-  const combinedRoute = []; // 전체 경로를 저장할 배열
+  path.forEach((nodeName, index) => {
+    if (index === path.length - 1) return; // 마지막 노드는 처리하지 않음
 
-  // 1. DirectionsService와 DirectionsRenderer 상태 확인
-  console.log("DirectionsService 객체:", directionsService);
-  console.log("DirectionsRenderer 객체:", directionsRenderer);
-
-  function processSegment(startNode, endNode, index) {
-    const startLocation = locationRepository.get(startNode);
-    const endLocation = locationRepository.get(endNode);
+    const startLocation = locationRepository.get(path[index]);
+    const endLocation = locationRepository.get(path[index + 1]);
 
     if (!startLocation || !endLocation) {
       console.error(`노드 정보를 찾을 수 없습니다: ${startNode}, ${endNode}`);
@@ -598,38 +601,22 @@ window.visualizePath = function () {
     const request = {
       origin: { lat: startLocation.latitude, lng: startLocation.longitude },
       destination: { lat: endLocation.latitude, lng: endLocation.longitude },
-      travelMode: google.maps.TravelMode.DRIVING, // TRANSIT, WALKING 등 변경 가능
+      travelMode: google.maps.TravelMode[travelMode], // 선택한 이동 모드 적용
     };
 
-    // 2. API 요청 데이터 확인
-    console.log("Directions API 요청:", request);
-
     directionsService.route(request, (result, status) => {
-      // 3. API 응답 상태 및 결과 확인
-      console.log("Directions API 응답 상태:", status);
-
       if (status === "OK") {
-        console.log("Directions API 결과:", result);
-        combinedRoute.push(...result.routes[0].overview_path); // 경로를 결합
-        if (index === path.length - 2) {
-          // 마지막 호출일 때 전체 경로를 지도에 표시
-          const polyline = new google.maps.Polyline({
-            path: combinedRoute,
-            geodesic: true,
-            strokeColor: "#FF0000",
-            strokeOpacity: 0.8,
-            strokeWeight: 4,
-          });
-          polyline.setMap(map);
-          console.log("경로 시각화 완료:", combinedRoute);
-        }
+        directionsRenderer.setDirections(result); // 지도에 경로 표시
+        console.log("경로 데이터:", result);
+      } else if (status === "ZERO_RESULTS") {
+        alert(
+          "현재 설정된 이동 모드로 경로를 찾을 수 없습니다. 다른 이동 모드를 선택하세요."
+        );
+        console.error("ZERO_RESULTS: 경로가 존재하지 않습니다.");
       } else {
-        console.error("Directions API 요청 실패:", status);
+        alert("경로를 가져오는 중 오류가 발생했습니다.");
+        console.error("Directions API 오류 상태:", status);
       }
     });
-  }
-
-  for (let i = 0; i < path.length - 1; i++) {
-    processSegment(path[i], path[i + 1], i);
-  }
+  });
 };
