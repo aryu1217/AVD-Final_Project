@@ -308,6 +308,16 @@ window.initMap = function () {
     map: map,
   });
 
+  // DirectionsService와 DirectionsRenderer 초기화
+  directionsService = new google.maps.DirectionsService();
+  directionsRenderer = new google.maps.DirectionsRenderer({
+    map: map, // 지도를 렌더러에 연결
+    suppressMarkers: true, // 기본 마커 비활성화
+  });
+
+  console.log("DirectionsService 초기화 완료:", directionsService);
+  console.log("DirectionsRenderer 초기화 완료:", directionsRenderer);
+
   // 자동완성 기능 추가
   const input = document.getElementById("location-input");
   autocomplete = new google.maps.places.Autocomplete(input, {
@@ -330,10 +340,6 @@ window.initMap = function () {
     // Location 객체 생성 및 저장
     const location = new Location(locationName, latitude, longitude);
     locationRepository.add(location);
-
-    directionsService = new google.maps.DirectionsService();
-    directionsRenderer = new google.maps.DirectionsRenderer();
-    directionsRenderer.setMap(map);
 
     // 카드 추가
     addLocationCard(location);
@@ -571,27 +577,14 @@ window.visualizePath = function () {
     return;
   }
 
-  console.log("최적 경로:", path);
-
-  // 경로 상의 각 노드에 마커 추가
-  path.forEach((nodeName) => {
-    const location = locationRepository.get(nodeName);
-    if (!location) {
-      console.error(`Node ${nodeName}에 대한 좌표 정보가 없습니다.`);
-      return;
-    }
-
-    const marker = new google.maps.Marker({
-      position: { lat: location.latitude, lng: location.longitude },
-      map: map,
-      title: nodeName,
-    });
-
-    console.log(`노드 ${nodeName}에 마커 추가:`, location);
-  });
+  console.log("최적 경로:", path); // 경로 확인
 
   // Directions API를 사용해 실제 경로 시각화
   const combinedRoute = []; // 전체 경로를 저장할 배열
+
+  // 1. DirectionsService와 DirectionsRenderer 상태 확인
+  console.log("DirectionsService 객체:", directionsService);
+  console.log("DirectionsRenderer 객체:", directionsRenderer);
 
   function processSegment(startNode, endNode, index) {
     const startLocation = locationRepository.get(startNode);
@@ -608,8 +601,15 @@ window.visualizePath = function () {
       travelMode: google.maps.TravelMode.DRIVING, // TRANSIT, WALKING 등 변경 가능
     };
 
+    // 2. API 요청 데이터 확인
+    console.log("Directions API 요청:", request);
+
     directionsService.route(request, (result, status) => {
+      // 3. API 응답 상태 및 결과 확인
+      console.log("Directions API 응답 상태:", status);
+
       if (status === "OK") {
+        console.log("Directions API 결과:", result);
         combinedRoute.push(...result.routes[0].overview_path); // 경로를 결합
         if (index === path.length - 2) {
           // 마지막 호출일 때 전체 경로를 지도에 표시
