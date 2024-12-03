@@ -19,11 +19,20 @@ body {
   height: 100%;
   width: 100%;
   margin-top: 20px;
-  padding-right: 50px;
+  padding-left: 120px;
 }
 
 #right-container {
   margin-left: 30px;
+}
+
+#right-container button {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+
+#right-container button:hover {
+  opacity: 0.5;
 }
 
 #map {
@@ -111,9 +120,10 @@ button {
   flex: 1; /* 버튼을 균등한 크기로 설정 */
   margin: 2px; /* 버튼 간격 */
   max-width: 100px; /* 버튼 너비 제한 */
-  font-size: 12px; /* 버튼 텍스트 크기 조정 */
+  font-size: 11px; /* 버튼 텍스트 크기 조정 */
   text-align: center; /* 텍스트 정렬 */
-  border: none;
+  border: 1px solid #ddd;
+  border-radius: 8px;
 }
 
 /* 버튼 색상 */
